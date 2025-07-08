@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Inscripción Escolar - Colegio San Juan Bautista</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .hero-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        @keyframes floating {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        .form-section {
+            display: none;
+        }
+        .form-section.active {
+            display: block;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .success-message, .error-message {
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+        .success-message {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        .error-message {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        .input-error {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        /* Chatbot Styles - optimized for PDF */
+        .chatbot-container {
+            position: relative;
+            margin: 20px 0;
+            border: 2px solid #667eea;
+            border-radius: 15px;
+            background: white;
+        }
+        .chatbot-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            border-radius: 13px 13px 0 0;
+        }
+        .chatbot-messages {
+            padding: 15px;
+            background: #f8f9fa;
+            min-height: 200px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .message.bot {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        .message.user {
+            background: #667eea;
+            color: white;
+            margin-left: auto;
+        }
+        .chatbot-input {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 0 0 13px 13px;
+        }
+        .chatbot-input input {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 10px 15px;
+            margin-right: 10px;
+            outline: none;
+        }
+        .chatbot-input button {
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+        }
+        
+        /* Admin Panel Styles */
+        .admin-section {
+            background: #f8f9fa;
+            border-top: 3px solid #667eea;
+        }
+        .admin-toggle {
+            cursor: pointer;
+            user-select: none;
+        }
+        .admin-content {
+            display: none;
+        }
+        .admin-content.active {
+            display: block;
+        }
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        /* PDF Export Optimization */
+        @media print {
+            .fixed {
+                position: relative !important;
+            }
+            body {
+                font-size: 12px;
+            }
+            .hero-gradient {
+                background: #667eea !important;
+                -webkit-print-color-adjust: exact;
+            }
+            .modal {
+                display: none !important;
+            }
+            .chatbot-messages {
+                max-height: none !important;
+                overflow: visible !important;
+            }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            z-index: 2000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        .notification.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        .notification.error {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg w-full top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-graduation-cap text-3xl text-blue-600"></i>
+                    <h1 class="text-2xl font-bold text-gray-800">Colegio San Juan Bautista</h1>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="#inicio" class="text-gray-600 hover:text-blue-600 transition">Inicio</a>
+                    <a href="#instalaciones" class="text-gray-600 hover:text-blue-600 transition">Instalaciones</a>
+                    <a href="#formulario" class="text-gray-600 hover:text-blue-600 transition">Inscripción</a>
+                    <a href="#reportes" class="text-gray-600 hover:text-blue-600 transition">Reportes</a>
+                    <a href="#asistente" class="text-gray-600 hover:text-blue-600 transition">Asistente</a>
+                    <a href="#contacto" class="text-gray-600 hover:text-blue-600 transition">Contacto</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="inicio" class="hero-gradient text-white">
+        <div class="max-w-7xl mx-auto px-4 py-20">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div class="fade-in">
+                    <h2 class="text-5xl font-bold mb-6">
+                        Admisión Escolar<br>
+                        <span class="text-yellow-300">2025-2030</span>
+                    </h2>
+                    <p class="text-xl mb-8 text-gray-100">
+                        Prepara el futuro de tus hijos en un ambiente académico de excelencia, 
+                        con tecnología de vanguardia y valores sólidos.
+                    </p>
+                    <div class="space-x-4">
+                        <a href="#formulario" class="bg-yellow-400 text-gray-800 px-8 py-3 rounded-full font-bold hover:bg-yellow-300 transition inline-block">
+                            <i class="fas fa-edit mr-2"></i>Inscribir Ahora
+                        </a>
+                        <a href="#instalaciones" class="border-2 border-white text-white px-8 py-3 rounded-full font-bold hover:bg-white hover:text-gray-800 transition inline-block">
+                            <i class="fas fa-eye mr-2"></i>Ver Instalaciones
+                        </a>
+                    </div>
+                </div>
+                <div class="floating">
+                    <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                         alt="Estudiantes" class="rounded-lg shadow-2xl">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="bg-white py-16">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+                <div class="fade-in">
+                    <div class="text-4xl font-bold text-blue-600 mb-2">15+</div>
+                    <div class="text-gray-600">Años de Experiencia</div>
+                </div>
+                <div class="fade-in">
+                    <div class="text-4xl font-bold text-green-600 mb-2">500+</div>
+                    <div class="text-gray-600">Estudiantes Activos</div>
+                </div>
+                <div class="fade-in">
+                    <div class="text-4xl font-bold text-purple-600 mb-2">98%</div>
+                    <div class="text-gray-600">Tasa de Aprobación</div>
+                </div>
+                <div class="fade-in">
+                    <div class="text-4xl font-bold text-red-600 mb-2">25</div>
+                    <div class="text-gray-600">Profesores Calificados</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Instalaciones -->
+    <section id="instalaciones" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-16 fade-in">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">Nuestras Instalaciones</h2>
+                <p class="text-xl text-gray-600">Espacios diseñados para el aprendizaje del siglo XXI</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white rounded-lg overflow-hidden shadow-lg card-hover fade-in">
+                    <img src="https://images.unsplash.com/photo-1497486751825-1233686d5d80?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" 
+                         alt="Aulas Modernas" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-3 text-gray-800">
+                            <i class="fas fa-chalkboard-teacher text-blue-600 mr-2"></i>
+                            Aulas Tecnológicas
+                        </h3>
+                        <p class="text-gray-600">Salones equipados con pizarras inteligentes, proyectores 4K y conectividad completa para un aprendizaje interactivo.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg overflow-hidden shadow-lg card-hover fade-in">
+                    <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" 
+                         alt="Laboratorio" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-3 text-gray-800">
+                            <i class="fas fa-flask text-green-600 mr-2"></i>
+                            Laboratorios Científicos
+                        </h3>
+                        <p class="text-gray-600">Laboratorios de física, química y biología completamente equipados para experimentación práctica.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg overflow-hidden shadow-lg card-hover fade-in">
+                    <img src="https://images.unsplash.com/photo-1544717297-fa95b6ee9643?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80" 
+                         alt="Deportes" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-3 text-gray-800">
+                            <i class="fas fa-running text-red-600 mr-2"></i>
+                            Instalaciones Deportivas
+                        </h3>
+                        <p class="text-gray-600">Canchas multideportivas, gimnasio, alberca y espacios para actividades físicas y recreativas.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Formulario de Inscripción -->
+    <section id="formulario" class="py-20 bg-white">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="text-center mb-12 fade-in">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-clipboard-list text-blue-600 mr-3"></i>
+                    Formulario de Inscripción
+                </h2>
+                <p class="text-xl text-gray-600">Complete el formulario para iniciar el proceso de admisión</p>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-xl p-8 fade-in">
+                <!-- Indicador de progreso -->
+                <div class="mb-8">
+                    <div class="flex justify-between text-sm text-gray-500 mb-2">
+                        <span>Datos del Estudiante</span>
+                        <span>Datos de los Padres</span>
+                        <span>Información Adicional</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 33%" id="progress-bar"></div>
+                    </div>
+                </div>
+
+                <!-- Mensajes de estado -->
+                <div id="success-message" class="success-message">
+                    <i class="fas fa-check-circle text-2xl mb-2"></i>
+                    <div id="success-text"></div>
+                </div>
+
+                <div id="error-message" class="error-message">
+                    <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                    <div id="error-text"></div>
+                </div>
+
+                <form id="form-inscripcion" class="space-y-6">
+                    <!-- Sección 1: Datos del Estudiante -->
+                    <div class="form-section active" id="section-1">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                            <i class="fas fa-user-graduate text-blue-600 mr-3"></i>
+                            Información del Estudiante
+                        </h3>
+                        
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-user mr-2"></i>Nombres *
+                                </label>
+                                <input type="text" name="nombres" required 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                       placeholder="Nombres del estudiante">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-user mr-2"></i>Apellidos *
+                                </label>
+                                <input type="text" name="apellidos" required 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                       placeholder="Apellidos del estudiante">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-calendar mr-2"></i>Fecha de Nacimiento *
+                                </label>
+                                <input type="date" name="fechaNacimiento" id="fecha-nacimiento" required 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-birthday-cake mr-2"></i>Edad
+                                </label>
+                                <input type="text" id="edad" readonly 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"
+                                       placeholder="Se calculará automáticamente">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-layer-group mr-2"></i>Grado *
+                                </label>
+                                <select name="grado" required 
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                                    <option value="">Seleccionar grado</option>
+                                    <option value="1">1° Grado</option>
+                                    <option value="2">2° Grado</option>
+                                    <option value="3">3° Grado</option>
+                                    <option value="4">4° Grado</option>
+                                    <option value="5">5° Grado</option>
+                                    <option value="6">6° Grado</option>
+                                    <option value="7">1° Secundaria</option>
+                                    <option value="8">2° Secundaria</option>
+                                    <option value="9">3° Secundaria</option>
+                                    <option value="10">4° Secundaria</option>
+                                    <option value="11">5° Secundaria</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-calendar-alt mr-2"></i>Año Escolar *
+                                </label>
+                                <select name="anoEscolar" required 
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                                    <option value="">Seleccionar año</option>
+                                    <option value="2025">2025</option>
+                                    <option value="2026" selected>2026</option>
+                                    <option value="2027">2027</option>
+                                    <option value="2028">2028</option>
+                                    <option value="2029">2029</option>
+                                    <option value="2030">2030</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end mt-8">
+                            <button type="button" onclick="nextSection()" class="btn-primary text-white px-8 py-3 rounded-lg font-medium">
+                                Siguiente <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sección 2: Datos de los Padres -->
+                    <div class="form-section" id="section-2">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                            <i class="fas fa-users text-blue-600 mr-3"></i>
+                            Información de los Padres
+                        </h3>
+                        
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <!-- Información del Padre -->
+                            <div class="col-span-2">
+                                <h4 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                                    <i class="fas fa-male text-blue-500 mr-2"></i>
+                                    Información del Padre
+                                </h4>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-user mr-2"></i>Nombres Completos
+                                </label>
+                                <input type="text" name="padreNombres"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                       placeholder="Nombres y apellidos del padre">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-phone mr-2"></i>Teléfono
+                                </label>
+                                <input type="tel" name="padreTelefono"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                       placeholder="Número de teléfono">
+                            </div>
+                            
+                            <div class="form-group col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-envelope mr-2"></i>Email del Padre
+                                </label>
+                                <input type="email" name="emailPadre"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                       placeholder="correo@ejemplo.com">
+                            </div>
+                            
+                            <!-- Información de la Madre -->
+                            <div class="col-span-2 mt-6">
+                                <h4 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                                    <i class="fas fa-female text-pink-500 mr-2"></i>
+                                    Información de la Madre
+                                </h4>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-user mr-2"></i>Nombres Completos
+                                </label>
+                                <input type="text" name="madreNombres"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                       placeholder="Nombres y apellidos de la madre">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-phone mr-2"></i>Teléfono
+                                </label>
+                                <input type="tel" name="madreTelefono"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                       placeholder="Número de teléfono">
+                            </div>
+                            
+                            <div class="form-group col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-envelope mr-2"></i>Email de la Madre
+                                </label>
+                                <input type="email" name="emailMadre"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                       placeholder="correo@ejemplo.com">
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between mt-8">
+                            <button type="button" onclick="prevSection()" class="bg-gray-500 text-white px-8 py-3 rounded-lg font-medium">
+                                <i class="fas fa-arrow-left mr-2"></i> Anterior
+                            </button>
+                            <button type="button" onclick="nextSection()" class="btn-primary text-white px-8 py-3 rounded-lg font-medium">
+                                Siguiente <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sección 3: Información Adicional -->
+                    <div class="form-section" id="section-3">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                            <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+                            Información Adicional
+                        </h3>
+                        
+                        <div class="space-y-6">
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-home mr-2"></i>Dirección Completa *
+                                </label>
+                                <textarea name="direccion" required rows="3"
+                                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                          placeholder="Dirección completa de residencia"></textarea>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-briefcase mr-2"></i>Profesión de los Padres
+                                </label>
+                                <input type="text" name="profesion"
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                                       placeholder="Profesión u ocupación principal">
+                            </div>
+                            
+                            <div class="bg-blue-50 border-l-4 border-blue-400 p-6 rounded-lg">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-info-circle text-blue-400 text-xl"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h4 class="text-lg font-medium text-blue-800">Información Importante</h4>
+                                        <div class="mt-2 text-sm text-blue-700">
+                                            <ul class="list-disc list-inside space-y-1">
+                                                <li>Al menos un correo electrónico es obligatorio para recibir la confirmación</li>
+                                                <li>Recibirán una llamada en los próximos 2-3 días hábiles</li>
+                                                <li>Se coordinará una visita a las instalaciones</li>
+                                                <li>Todos los datos proporcionados son confidenciales</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between mt-8">
+                            <button type="button" onclick="prevSection()" class="bg-gray-500 text-white px-8 py-3 rounded-lg font-medium">
+                                <i class="fas fa-arrow-left mr-2"></i> Anterior
+                            </button>
+                            <button type="submit" id="submit-btn" class="btn-primary text-white px-12 py-3 rounded-lg font-medium">
+                                <span id="submit-text">
+                                    <i class="fas fa-paper-plane mr-2"></i>Enviar Inscripción
+                                </span>
+                                <span id="loading-text" style="display: none;">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i>Enviando...
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sistema de Reportes -->
+    <section id="reportes" class="admin-section py-20">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="admin-toggle mb-8" onclick="toggleAdminPanel()">
+                <div class="bg-white rounded-lg shadow-lg p-6 cursor-pointer hover:shadow-xl transition">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-chart-bar text-blue-600 text-2xl mr-4"></i>
+                            <div>
+                                <h2 class="text-2xl font-bold text-gray-800">Panel de Reportes Administrativo</h2>
+                                <p class="text-gray-600">Gestión y estadísticas de inscripciones</p>
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-down text-gray-400 text-xl" id="admin-arrow"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="admin-content" id="admin-content">
+                <!-- Estadísticas Generales -->
+                <div class="grid md:grid-cols-4 gap-6 mb-8">
+                    <div class="stats-card">
+                        <div class="text-3xl font-bold text-blue-600 mb-2" id="total-inscripciones">0</div>
+                        <div class="text-gray-600">Total Inscripciones</div>
+                        <div class="text-sm text-green-500 mt-1">
+                            <i class="fas fa-arrow-up mr-1"></i>Actualizadas en tiempo real
+                        </div>
+                    </div>
+                    
+                    <div class="stats-card">
+                        <div class="text-3xl font-bold text-green-600 mb-2" id="emails-enviados">0</div>
+                        <div class="text-gray-600">Emails Enviados</div>
+                        <div class="text-sm text-green-500 mt-1">
+                            <i class="fas fa-check mr-1"></i>100% entregados
+                        </div>
+                    </div>
+                    
+                    <div class="stats-card">
+                        <div class="text-3xl font-bold text-purple-600 mb-2" id="grados-populares">-</div>
+                        <div class="text-gray-600">Grado Más Solicitado</div>
+                        <div class="text-sm text-blue-500 mt-1">
+                            <i class="fas fa-star mr-1"></i><span id="grados-count">0</span> solicitudes
+                        </div>
+                    </div>
+                    
+                    <div class="stats-card">
+                        <div class="text-3xl font-bold text-red-600 mb-2" id="pendientes">0</div>
+                        <div class="text-gray-600">Emails Reenviados</div>
+                        <div class="text-sm text-orange-500 mt-1">
+                            <i class="fas fa-redo mr-1"></i>Control de calidad
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Inscripciones -->
+                <div class="grid md:grid-cols-2 gap-8 mb-8">
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">
+                            <i class="fas fa-chart-line text-blue-600 mr-2"></i>
+                            Inscripciones por Día
+                        </h3>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="inscripcionesChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">
+                            <i class="fas fa-chart-pie text-green-600 mr-2"></i>
+                            Distribución por Grados
+                        </h3>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="gradosChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Emails Enviados -->
+                <div class="table-container mb-8">
+                    <div class="bg-white p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-xl font-bold text-gray-800">
+                                <i class="fas fa-envelope text-blue-600 mr-2"></i>
+                                Registro de Inscripciones y Emails
+                            </h3>
+                            <div class="flex space-x-2">
+                                <button onclick="exportarReporte()" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition">
+                                    <i class="fas fa-download mr-2"></i>Exportar CSV
+                                </button>
+                                <button onclick="actualizarReportes()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">
+                                    <i class="fas fa-sync mr-2"></i>Actualizar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-600">Fecha</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-600">Estudiante</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-600">Email Enviado A</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-600">Estado</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-600">Grado</th>
+                                        <th class="px-4 py-3 text-left font-medium text-gray-600">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="emails-table-body">
+                                    <tr>
+                                        <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                                            <i class="fas fa-inbox text-4xl mb-4 text-gray-300"></i>
+                                            <p>No hay inscripciones registradas aún.</p>
+                                            <p class="text-sm">Las inscripciones aparecerán aquí cuando se envíen formularios.</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Asistente Virtual -->
+    <section id="asistente" class="py-20 bg-white">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-robot text-blue-600 mr-3"></i>
+                    Asistente Virtual
+                </h2>
+                <p class="text-xl text-gray-600">Obtén respuestas inmediatas sobre el proceso de inscripción</p>
+            </div>
+
+            <div class="chatbot-container">
+                <div class="chatbot-header">
+                    <i class="fas fa-robot mr-2"></i>
+                    Asistente Virtual - Colegio San Juan Bautista
+                </div>
+                <div class="chatbot-messages" id="chatbot-messages">
+                    <div class="message bot">
+                        ¡Hola! Soy el asistente virtual del Colegio San Juan Bautista. 
+                        ¿En qué puedo ayudarte con el proceso de inscripción?
+                    </div>
+                </div>
+                <div class="chatbot-input">
+                    <input type="text" id="chatbot-input" placeholder="Escribe tu pregunta aquí..." onkeypress="handleChatbotKeypress(event)">
+                    <button onclick="sendChatbotMessage()">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contacto" class="bg-gray-800 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-graduation-cap mr-2"></i>
+                        Colegio San Juan Bautista
+                    </h3>
+                    <p class="text-gray-300 mb-4">
+                        Formando líderes del futuro con excelencia académica, 
+                        valores sólidos y tecnología de vanguardia.
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-bold mb-4">
+                        <i class="fas fa-map-marker-alt mr-2"></i>
+                        Contacto
+                    </h4>
+                    <div class="space-y-2 text-gray-300">
+                        <p><i class="fas fa-envelope mr-2"></i> sanjuanbautista@colegio.edu.pe</p>
+                        <p><i class="fas fa-phone mr-2"></i> (01) 234-5678</p>
+                        <p><i class="fas fa-mobile-alt mr-2"></i> 987-654-321</p>
+                        <p><i class="fas fa-map-pin mr-2"></i> Av. Alameda Eden, San Martin, Nueva Cajamarca</p>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-bold mb-4">
+                        <i class="fas fa-clock mr-2"></i>
+                        Horarios de Atención
+                    </h4>
+                    <div class="space-y-2 text-gray-300">
+                        <p>Lunes a Viernes: 7:10 AM - 3:00 PM</p>
+                        <p>Sábados: 8:00 AM - 1:00 PM</p>
+                        <p>Domingos: Cerrado</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-600 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2024 Colegio San Juan Bautista. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal para ver detalles -->
+    <div id="modal-detalle" class="modal">
+        <div class="modal-content">
+            <div class="bg-blue-600 text-white p-6 rounded-t-lg">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold">
+                        <i class="fas fa-user-graduate mr-2"></i>
+                        Detalles de Inscripción
+                    </h3>
+                    <button onclick="cerrarModal()" class="text-white hover:text-gray-300">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6" id="modal-content">
+                <!-- Contenido del modal se insertará aquí -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificación flotante -->
+    <div id="notification" class="notification">
+        <span id="notification-text"></span>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentSection = 1;
+        const totalSections = 3;
+        let inscripcionesData = JSON.parse(localStorage.getItem('inscripcionesData') || '[]');
+        let gradosChart, inscripcionesChart;
+
+        // Respuestas predefinidas del chatbot
+        const chatbotResponses = {
+            'requisitos': 'Los requisitos para la inscripción son: 1) Llenar el formulario completo, 2) Proporcionar al menos un email de contacto, 3) Indicar el grado y año escolar deseado. ¿Hay algo específico sobre los requisitos que te gustaría saber?',
+            'documentos': 'Después de enviar la inscripción online, necesitarás presentar: partida de nacimiento, DNI del estudiante, boletas de notas del colegio anterior (si aplica), y fotos tamaño carnet. Te contactaremos para coordinar la entrega.',
+            'costos': 'Los costos varían según el grado. Contáctanos al (01) 234-5678 para información detallada sobre pensiones y matrícula. También podemos agendar una cita para explicarte nuestros planes de pago.',
+            'edad': 'Para calcular la edad automáticamente, solo selecciona la fecha de nacimiento en el formulario. El sistema calculará la edad exacta. Si tienes dudas sobre el grado apropiado según la edad, podemos ayudarte.',
+            'grados': 'Ofrecemos desde 1° de primaria hasta 5° de secundaria. Cada grado tiene un programa académico específico adaptado a la edad. ¿Para qué grado estás consultando?',
+            'contacto': 'Puedes contactarnos por: Teléfono: (01) 234-5678, Celular: 987-654-321, Email: sanjuanbautista@colegio.edu.pe, o visitarnos en Av. Alameda Eden, San Martin, Nueva Cajamarca.',
+            'horarios': 'Nuestros horarios de atención son: Lunes a Viernes de 7:10 AM a 3:00 PM, Sábados de 8:00 AM a 1:00 PM. Para inscripciones, recomendamos agendar cita previa.',
+            'instalaciones': 'Contamos con aulas tecnológicas con pizarras inteligentes, laboratorios de ciencias completamente equipados, instalaciones deportivas incluyendo canchas y gimnasio, biblioteca moderna y espacios recreativos.',
+            'proceso': 'El proceso es: 1) Completar el formulario online, 2) Recibir confirmación por email, 3) Recibir llamada de nuestro personal (2-3 días), 4) Agendar visita a las instalaciones, 5) Presentar documentos físicos, 6) Confirmación de vacante.',
+            'ayuda': 'Puedo ayudarte con información sobre: requisitos de inscripción, documentos necesarios, costos y pensiones, proceso de admisión, instalaciones del colegio, horarios de atención, y cualquier duda sobre el formulario.',
+            'default': 'Entiendo tu consulta. Te recomiendo que: 1) Revises la información en nuestra página web, 2) Llames directamente al (01) 234-5678 para consultas específicas, o 3) Nos visites en nuestras instalaciones. ¿Hay algo más en lo que pueda ayudarte?'
+        };
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            setupFadeInAnimations();
+            setupFormValidation();
+            setupCharts();
+            actualizarTablaEmails();
+            actualizarEstadisticas();
+            
+            // Calcular edad automáticamente
+            document.getElementById('fecha-nacimiento').addEventListener('change', calcularEdad);
+        });
+
+        function setupFadeInAnimations() {
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.fade-in').forEach(el => {
+                observer.observe(el);
+            });
+
+            // Navegación suave
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        }
+
+        function setupFormValidation() {
+            // Validación de emails
+            const emailInputs = document.querySelectorAll('input[type="email"]');
+            emailInputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    validateEmail(this);
+                });
+            });
+
+            // Validación de teléfonos
+            const phoneInputs = document.querySelectorAll('input[type="tel"]');
+            phoneInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    this.value = this.value.replace(/[^0-9\s\-\(\)]/g, '');
+                });
+            });
+
+            // Validación de nombres
+            const nameInputs = document.querySelectorAll('input[name*="ombres"], input[name*="apellidos"]');
+            nameInputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    this.value = this.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+                });
+            });
+        }
+
+        function setupCharts() {
+            // Gráfico de inscripciones por día
+            const inscripcionesCtx = document.getElementById('inscripcionesChart').getContext('2d');
+            inscripcionesChart = new Chart(inscripcionesCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Inscripciones',
+                        data: [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Gráfico de distribución por grados
+            const gradosCtx = document.getElementById('gradosChart').getContext('2d');
+            gradosChart = new Chart(gradosCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                            '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF',
+                            '#4BC0C0', '#FF6384', '#C9CBCF'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+
+            actualizarGraficos();
+        }
+
+        // Funciones del formulario
+        function calcularEdad() {
+            const fechaNacimiento = document.getElementById('fecha-nacimiento').value;
+            if (fechaNacimiento) {
+                const hoy = new Date();
+                const nacimiento = new Date(fechaNacimiento);
+                let edad = hoy.getFullYear() - nacimiento.getFullYear();
+                const mes = hoy.getMonth() - nacimiento.getMonth();
+                
+                if (mes < 0 || (mes === 0 && hoy.getDate() < nacimiento.getDate())) {
+                    edad--;
+                }
+                
+                document.getElementById('edad').value = edad + ' años';
+            }
+        }
+
+        function validateEmail(input) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (input.value && !emailRegex.test(input.value)) {
+                input.classList.add('input-error');
+                showFieldError(input, 'Formato de email inválido');
+            } else {
+                input.classList.remove('input-error');
+                hideFieldError(input);
+            }
+        }
+
+        function showFieldError(input, message) {
+            hideFieldError(input);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'field-error text-red-500 text-sm mt-1';
+            errorDiv.textContent = message;
+            input.parentNode.appendChild(errorDiv);
+        }
+
+        function hideFieldError(input) {
+            const existingError = input.parentNode.querySelector('.field-error');
+            if (existingError) {
+                existingError.remove();
+            }
+        }
+
+        function nextSection() {
+            if (validateCurrentSection()) {
+                if (currentSection < totalSections) {
+                    document.getElementById(`section-${currentSection}`).classList.remove('active');
+                    currentSection++;
+                    document.getElementById(`section-${currentSection}`).classList.add('active');
+                    updateProgressBar();
+                    document.getElementById('formulario').scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            }
+        }
+
+        function prevSection() {
+            if (currentSection > 1) {
+                document.getElementById(`section-${currentSection}`).classList.remove('active');
+                currentSection--;
+                document.getElementById(`section-${currentSection}`).classList.add('active');
+                updateProgressBar();
+                document.getElementById('formulario').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }
+
+        function updateProgressBar() {
+            const progress = (currentSection / totalSections) * 100;
+            document.getElementById('progress-bar').style.width = progress + '%';
+        }
+
+        function validateCurrentSection() {
+            let isValid = true;
+            const currentSectionElement = document.getElementById(`section-${currentSection}`);
+            const requiredFields = currentSectionElement.querySelectorAll('[required]');
+            
+            currentSectionElement.querySelectorAll('.input-error').forEach(input => {
+                input.classList.remove('input-error');
+            });
+            currentSectionElement.querySelectorAll('.field-error').forEach(error => {
+                error.remove();
+            });
+
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('input-error');
+                    showFieldError(field, 'Este campo es obligatorio');
+                    isValid = false;
+                }
+            });
+
+            if (currentSection === 2) {
+                const emailPadre = currentSectionElement.querySelector('input[name="emailPadre"]').value;
+                const emailMadre = currentSectionElement.querySelector('input[name="emailMadre"]').value;
+                
+                if (!emailPadre && !emailMadre) {
+                    showMessage('error', 'Debe proporcionar al menos un correo electrónico (padre o madre)');
+                    isValid = false;
+                }
+            }
+
+            if (!isValid) {
+                showMessage('error', 'Por favor, complete todos los campos requeridos correctamente');
+            }
+
+            return isValid;
+        }
+
+        function showMessage(type, message) {
+            hideMessages();
+            const messageElement = document.getElementById(`${type}-message`);
+            const textElement = document.getElementById(`${type}-text`);
+            
+            textElement.textContent = message;
+            messageElement.style.display = 'block';
+            
+            setTimeout(() => {
+                messageElement.style.display = 'none';
+            }, 5000);
+            
+            messageElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }
+
+        function hideMessages() {
+            document.getElementById('success-message').style.display = 'none';
+            document.getElementById('error-message').style.display = 'none';
+        }
+
+        function showNotification(type, message) {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notification-text');
+            
+            notification.className = `notification ${type}`;
+            notificationText.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        // Manejo del formulario principal
+        document.getElementById('form-inscripcion').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!validateCurrentSection()) {
+                return;
+            }
+
+            const submitBtn = document.getElementById('submit-btn');
+            const submitText = document.getElementById('submit-text');
+            const loadingText = document.getElementById('loading-text');
+            
+            submitBtn.disabled = true;
+            submitText.style.display = 'none';
+            loadingText.style.display = 'inline';
+            hideMessages();
+
+            try {
+                // Simular envío de formulario
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Obtener datos del formulario
+                const formData = new FormData(this);
+                const data = {};
+                formData.forEach((value, key) => {
+                    data[key] = value;
+                });
+
+                // Agregar a datos reales
+                const inscripcion = {
+                    id: Date.now(),
+                    fecha: new Date().toLocaleString('es-ES', {
+                        day: '2-digit',
+                        month: '2-digit', 
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }),
+                    estudiante: `${data.nombres} ${data.apellidos}`,
+                    nombres: data.nombres,
+                    apellidos: data.apellidos,
+                    fechaNacimiento: data.fechaNacimiento,
+                    grado: data.grado,
+                    anoEscolar: data.anoEscolar,
+                    emails: [data.emailPadre, data.emailMadre].filter(email => email),
+                    padreNombres: data.padreNombres || 'No especificado',
+                    padreTelefono: data.padreTelefono || 'No especificado',
+                    madreNombres: data.madreNombres || 'No especificado',
+                    madreTelefono: data.madreTelefono || 'No especificado',
+                    direccion: data.direccion,
+                    profesion: data.profesion || 'No especificada',
+                    estado: 'Entregado',
+                    emailsReenviados: 0
+                };
+                
+                inscripcionesData.push(inscripcion);
+                localStorage.setItem('inscripcionesData', JSON.stringify(inscripcionesData));
+                
+                actualizarTablaEmails();
+                actualizarEstadisticas();
+                actualizarGraficos();
+
+                showMessage('success', 
+                    '¡Inscripción enviada exitosamente! Se han enviado correos de confirmación a los emails proporcionados. Recibirán una llamada en los próximos 2-3 días hábiles para coordinar la visita a las instalaciones.'
+                );
+                
+                showNotification('success', 'Inscripción registrada correctamente');
+                
+                setTimeout(() => {
+                    this.reset();
+                    currentSection = 1;
+                    document.querySelectorAll('.form-section').forEach(section => {
+                        section.classList.remove('active');
+                    });
+                    document.getElementById('section-1').classList.add('active');
+                    updateProgressBar();
+                    document.getElementById('edad').value = '';
+                }, 3000);
+                
+            } catch (error) {
+                showMessage('error', 'Error al enviar la inscripción. Por favor, intente nuevamente.');
+                showNotification('error', 'Error al procesar la inscripción');
+            } finally {
+                submitBtn.disabled = false;
+                submitText.style.display = 'inline';
+                loadingText.style.display = 'none';
+            }
+        });
+
+        // Funciones del chatbot
+        function handleChatbotKeypress(event) {
+            if (event.key === 'Enter') {
+                sendChatbotMessage();
+            }
+        }
+
+        function sendChatbotMessage() {
+            const input = document.getElementById('chatbot-input');
+            const message = input.value.trim();
+            
+            if (message) {
+                addChatbotMessage(message, 'user');
+                input.value = '';
+                
+                // Simular respuesta del bot
+                setTimeout(() => {
+                    const response = getChatbotResponse(message);
+                    addChatbotMessage(response, 'bot');
+                }, 1000);
+            }
+        }
+
+        function addChatbotMessage(message, sender) {
+            const messagesContainer = document.getElementById('chatbot-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.textContent = message;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function getChatbotResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            for (const [key, response] of Object.entries(chatbotResponses)) {
+                if (lowerMessage.includes(key)) {
+                    return response;
+                }
+            }
+            
+            return chatbotResponses.default;
+        }
+
+        // Funciones del panel administrativo
+        function toggleAdminPanel() {
+            const adminContent = document.getElementById('admin-content');
+            const adminArrow = document.getElementById('admin-arrow');
+            
+            if (adminContent.classList.contains('active')) {
+                adminContent.classList.remove('active');
+                adminArrow.classList.remove('fa-chevron-up');
+                adminArrow.classList.add('fa-chevron-down');
+            } else {
+                adminContent.classList.add('active');
+                adminArrow.classList.remove('fa-chevron-down');
+                adminArrow.classList.add('fa-chevron-up');
+            }
+        }
+
+        function actualizarTablaEmails() {
+            const tbody = document.getElementById('emails-table-body');
+            tbody.innerHTML = '';
+            
+            if (inscripcionesData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                            <i class="fas fa-inbox text-4xl mb-4 text-gray-300"></i>
+                            <p>No hay inscripciones registradas aún.</p>
+                            <p class="text-sm">Las inscripciones aparecerán aquí cuando se envíen formularios.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            inscripcionesData.forEach(inscripcion => {
+                const row = document.createElement('tr');
+                row.className = 'border-b hover:bg-gray-50';
+                
+                const emailsList = inscripcion.emails.join('<br>');
+                const estadoClass = inscripcion.estado === 'Entregado' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+                const estadoIcon = inscripcion.estado === 'Entregado' ? 'fas fa-check' : 'fas fa-clock';
+                
+                row.innerHTML = `
+                    <td class="px-4 py-3">${inscripcion.fecha}</td>
+                    <td class="px-4 py-3 font-medium">${inscripcion.estudiante}</td>
+                    <td class="px-4 py-3">${emailsList}</td>
+                    <td class="px-4 py-3">
+                        <span class="${estadoClass} px-2 py-1 rounded-full text-xs">
+                            <i class="${estadoIcon} mr-1"></i>${inscripcion.estado}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">${inscripcion.grado}° Grado</td>
+                    <td class="px-4 py-3">
+                        <button class="text-blue-600 hover:text-blue-800 mr-2" onclick="verDetalle(${inscripcion.id})" title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="text-green-600 hover:text-green-800" onclick="reenviarEmail(${inscripcion.id})" title="Reenviar email">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function actualizarEstadisticas() {
+            const totalInscripciones = inscripcionesData.length;
+            const emailsEnviados = inscripcionesData.reduce((total, inscripcion) => 
+                total + inscripcion.emails.length + (inscripcion.emailsReenviados || 0), 0);
+            const emailsReenviados = inscripcionesData.reduce((total, inscripcion) => 
+                total + (inscripcion.emailsReenviados || 0), 0);
+            
+            document.getElementById('total-inscripciones').textContent = totalInscripciones;
+            document.getElementById('emails-enviados').textContent = emailsEnviados;
+            document.getElementById('pendientes').textContent = emailsReenviados;
+            
+            // Calcular grado más popular
+            if (totalInscripciones > 0) {
+                const gradosCounts = {};
+                inscripcionesData.forEach(inscripcion => {
+                    const grado = inscripcion.grado;
+                    gradosCounts[grado] = (gradosCounts[grado] || 0) + 1;
+                });
+                
+                const gradoMasPopular = Object.keys(gradosCounts).reduce((a, b) => 
+                    gradosCounts[a] > gradosCounts[b] ? a : b);
+                
+                document.getElementById('grados-populares').textContent = `${gradoMasPopular}°`;
+                document.getElementById('grados-count').textContent = gradosCounts[gradoMasPopular];
+            }
+        }
+
+        function actualizarGraficos() {
+            // Actualizar gráfico de inscripciones por día
+            const inscripcionesPorDia = {};
+            inscripcionesData.forEach(inscripcion => {
+                const fecha = inscripcion.fecha.split(' ')[0];
+                inscripcionesPorDia[fecha] = (inscripcionesPorDia[fecha] || 0) + 1;
+            });
+            
+            const fechas = Object.keys(inscripcionesPorDia).sort();
+            const cantidades = fechas.map(fecha => inscripcionesPorDia[fecha]);
+            
+            inscripcionesChart.data.labels = fechas;
+            inscripcionesChart.data.datasets[0].data = cantidades;
+            inscripcionesChart.update();
+            
+            // Actualizar gráfico de grados
+            const gradosCounts = {};
+            const gradosLabels = {
+                '1': '1° Primaria', '2': '2° Primaria', '3': '3° Primaria',
+                '4': '4° Primaria', '5': '5° Primaria', '6': '6° Primaria',
+                '7': '1° Secundaria', '8': '2° Secundaria', '9': '3° Secundaria',
+                '10': '4° Secundaria', '11': '5° Secundaria'
+            };
+            
+            inscripcionesData.forEach(inscripcion => {
+                const grado = inscripcion.grado;
+                gradosCounts[grado] = (gradosCounts[grado] || 0) + 1;
+            });
+            
+            const gradosKeys = Object.keys(gradosCounts);
+            const gradosValues = gradosKeys.map(key => gradosCounts[key]);
+            const gradosNames = gradosKeys.map(key => gradosLabels[key]);
+            
+            gradosChart.data.labels = gradosNames;
+            gradosChart.data.datasets[0].data = gradosValues;
+            gradosChart.update();
+        }
+
+        function actualizarReportes() {
+            actualizarTablaEmails();
+            actualizarEstadisticas();
+            actualizarGraficos();
+            showNotification('success', 'Reportes actualizados correctamente');
+        }
+
+        function exportarReporte() {
+            if (inscripcionesData.length === 0) {
+                showNotification('error', 'No hay datos para exportar');
+                return;
+            }
+            
+            const csvContent = "data:text/csv;charset=utf-8," + 
+                "Fecha,Estudiante,Nombres,Apellidos,Fecha Nacimiento,Grado,Año Escolar,Email Padre,Email Madre,Padre,Madre,Dirección,Profesión,Estado,Emails Reenviados\n" +
+                inscripcionesData.map(row => 
+                    `"${row.fecha}","${row.estudiante}","${row.nombres}","${row.apellidos}","${row.fechaNacimiento}","${row.grado}°","${row.anoEscolar}","${row.emails[0] || ''}","${row.emails[1] || ''}","${row.padreNombres}","${row.madreNombres}","${row.direccion}","${row.profesion}","${row.estado}","${row.emailsReenviados || 0}"`
+                ).join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `reporte_inscripciones_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('success', 'Reporte exportado correctamente');
+        }
+
+        function verDetalle(id) {
+            const inscripcion = inscripcionesData.find(item => item.id === id);
+            if (!inscripcion) {
+                showNotification('error', 'No se encontró la inscripción');
+                return;
+            }
+            
+            const modalContent = document.getElementById('modal-content');
+            modalContent.innerHTML = `
+                <div class="space-y-6">
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h4 class="font-bold text-blue-800 mb-3 flex items-center">
+                                <i class="fas fa-user-graduate mr-2"></i>
+                                Información del Estudiante
+                            </h4>
+                            <div class="space-y-2 text-sm">
+                                <p><strong>Nombres:</strong> ${inscripcion.nombres}</p>
+                                <p><strong>Apellidos:</strong> ${inscripcion.apellidos}</p>
+                                <p><strong>Fecha de Nacimiento:</strong> ${inscripcion.fechaNacimiento}</p>
+                                <p><strong>Grado Solicitado:</strong> ${inscripcion.grado}° Grado</p>
+                                <p><strong>Año Escolar:</strong> ${inscripcion.anoEscolar}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-green-50 p-4 rounded-lg">
+                            <h4 class="font-bold text-green-800 mb-3 flex items-center">
+                                <i class="fas fa-users mr-2"></i>
+                                Información de los Padres
+                            </h4>
+                            <div class="space-y-2 text-sm">
+                                <p><strong>Padre:</strong> ${inscripcion.padreNombres}</p>
+                                <p><strong>Teléfono Padre:</strong> ${inscripcion.padreTelefono}</p>
+                                <p><strong>Madre:</strong> ${inscripcion.madreNombres}</p>
+                                <p><strong>Teléfono Madre:</strong> ${inscripcion.madreTelefono}</p>
+                                <p><strong>Profesión:</strong> ${inscripcion.profesion}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-purple-800 mb-3 flex items-center">
+                            <i class="fas fa-envelope mr-2"></i>
+                            Información de Contacto
+                        </h4>
+                        <div class="space-y-2 text-sm">
+                            <p><strong>Emails de Contacto:</strong></p>
+                            <ul class="list-disc list-inside ml-4">
+                                ${inscripcion.emails.map(email => `<li>${email}</li>`).join('')}
+                            </ul>
+                            <p><strong>Dirección:</strong> ${inscripcion.direccion}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-info-circle mr-2"></i>
+                            Estado de la Inscripción
+                        </h4>
+                        <div class="space-y-2 text-sm">
+                            <p><strong>Fecha de Registro:</strong> ${inscripcion.fecha}</p>
+                            <p><strong>Estado:</strong> 
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
+                                    <i class="fas fa-check mr-1"></i>${inscripcion.estado}
+                                </span>
+                            </p>
+                            <p><strong>Emails Enviados:</strong> ${inscripcion.emails.length}</p>
+                            <p><strong>Emails Reenviados:</strong> ${inscripcion.emailsReenviados || 0}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-4 border-t">
+                        <button onclick="reenviarEmail(${inscripcion.id})" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition">
+                            <i class="fas fa-redo mr-2"></i>Reenviar Email
+                        </button>
+                        <button onclick="cerrarModal()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition">
+                            <i class="fas fa-times mr-2"></i>Cerrar
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('modal-detalle').classList.add('active');
+        }
+
+        function reenviarEmail(id) {
+            const inscripcion = inscripcionesData.find(item => item.id === id);
+            if (!inscripcion) {
+                showNotification('error', 'No se encontró la inscripción');
+                return;
+            }
+            
+            if (confirm(`¿Está seguro de reenviar los emails de confirmación para ${inscripcion.estudiante}?`)) {
+                // Simular reenvío de email
+                inscripcion.emailsReenviados = (inscripcion.emailsReenviados || 0) + inscripcion.emails.length;
+                localStorage.setItem('inscripcionesData', JSON.stringify(inscripcionesData));
+                
+                actualizarTablaEmails();
+                actualizarEstadisticas();
+                
+                showNotification('success', `Emails reenviados correctamente a ${inscripcion.emails.join(', ')}`);
+                
+                // Cerrar modal si está abierto
+                const modal = document.getElementById('modal-detalle');
+                if (modal.classList.contains('active')) {
+                    cerrarModal();
+                }
+            }
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-detalle').classList.remove('active');
+        }
+
+        // Cerrar modal al hacer click fuera de él
+        document.getElementById('modal-detalle').addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarModal();
+            }
+        });
+    </script>
+</body>
+</html>
